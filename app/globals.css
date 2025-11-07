@@ -1,26 +1,461 @@
-@import "tailwindcss";
+/* =========================
+   FONTS
+========================= */
+@import url("https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@900&family=Poppins:wght@500&display=swap");
 
+/* =========================
+   RESET DE BASE
+========================= */
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  padding: 0;
+  color: #e8f0f0;
+  font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial,
+    sans-serif;
+  font-weight: 500;
+  background: #081616;
+}
+
+/* Titres */
+h1,
+h2,
+h3,
+.panel-title,
+.hero-name {
+  font-family: "Cinzel Decorative", serif;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: #e8f0f0;
+}
+
+/* Variables */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --green-900: #0d2a2a;
+  --panel-bg: #0f2323; /* OPAQUE */
+  --panel-stroke: #235a45;
+  --panel-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
+  --gold-1: #ffd86a;
+  --gold-2: #f3b324;
+  --gold-3: #b37b0c;
+  --muted: #b6c7c7;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* =========================
+   HEADER
+========================= */
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 64px;
+  background: radial-gradient(
+    120% 120% at 50% 0%,
+    #0d2c2b 0%,
+    #0a1f20 60%,
+    #09191a 100%
+  );
+  border-bottom: 2px solid #2f6b55;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
 }
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.site-header__inner {
+  height: 64px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+@media (min-width: 1100px) {
+  .site-header__inner {
+    justify-content: center;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.site-header__brand {
+  font-family: "Cinzel Decorative", ui-serif, Georgia, serif;
+  font-size: 18px;
+  letter-spacing: 0.5px;
+  color: #e6f6f0;
+  text-decoration: none;
+  text-shadow: 0 1px 0 #000;
+}
+.site-header__nav {
+  display: flex;
+  gap: 18px;
+  margin-left: 12px;
+}
+.site-header__link {
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #cbf2d9;
+  text-decoration: none;
+  opacity: 0.9;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+.site-header__link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 1;
+}
+.site-header__link.is-active {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 12px rgba(120, 255, 180, 0.15);
+}
+.site-header__user {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+.userchip {
+  position: relative;
+}
+.userchip__btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 6px 10px;
+  border-radius: 12px;
+  color: #e9fff3;
+  font-weight: 700;
+}
+.userchip__btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+.userchip__avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  object-fit: cover;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+.userchip__name {
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.userchip__chev {
+  transition: transform 0.15s ease;
+  opacity: 0.9;
+}
+.userchip__chev.rot {
+  transform: rotate(180deg);
+}
+
+.usermenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  min-width: 200px;
+  background: #0f2323;
+  border: 1px solid #235a45;
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+.usermenu__item {
+  width: 100%;
+  text-align: left;
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #e9fff3;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 600;
+}
+.usermenu__item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.usermenu__item--danger {
+  color: #ffd2d2;
+}
+.usermenu__item--danger:hover {
+  background: rgba(255, 90, 90, 0.12);
+}
+
+@media (max-width: 720px) {
+  .site-header__inner {
+    gap: 12px;
+  }
+  .site-header__nav {
+    gap: 10px;
+  }
+  .site-header__link {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+  .userchip__name {
+    display: none;
+  }
+}
+
+/* =========================
+   SCÈNE / MISE EN PAGE
+========================= */
+/* L’image doit être placée ici : public/images/bg/main.jpg */
+.main-bg {
+  background: url("/images/bg/main.jpg") center center / cover no-repeat fixed;
+}
+.screen {
+  height: calc(100vh - 64px);
+  width: 100%;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 24px;
+  background-color: rgba(0, 0, 0, 0.15);
+  padding: 24px;
+}
+
+/* Colonnes */
+.col-left {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.col-right {
+  width: 520px;
+  flex: 0 0 520px;
+  min-width: 0;
+  display: flex;
+}
+
+/* =========================
+   PANNEAU GAUCHE
+========================= */
+.hero-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-stroke);
+  border-radius: 16px;
+  box-shadow: var(--panel-shadow);
+  padding: 16px 18px;
+  width: 720px; /* largeur maquette */
+  max-width: 100%;
+  margin: 24px auto 12px 24px; /* marge gauche; aligné à droite */
+}
+.hero-header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.hero-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #173131;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.hero-meta {
+  flex: 1;
+  min-width: 0;
+}
+.hero-name {
+  font-size: 22px;
+  margin: 0 0 6px 0;
+}
+.server-pill {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: #173131;
+  color: #d4ecec;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  font-size: 13px;
+}
+.hero-field {
+  margin-top: 8px;
+}
+.hero-actions {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Inputs lisibles */
+input,
+select {
+  background: #132b2b;
+  color: #e9fff3;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+button {
+  font-size: 16px;
+  padding: 10px 12px;
+}
+
+/* CTA or */
+.btn-gold {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  color: #2c2100;
+  background: linear-gradient(180deg, var(--gold-1) 0%, var(--gold-2) 100%);
+  box-shadow: 0 2px 0 var(--gold-3), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.btn-gold:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Bloc “Mes personnages” (OPAQUE) */
+.mychars-wrap {
+  margin-top: auto; /* pousse en bas */
+  margin-left: 24px;
+  margin-bottom: 24px;
+  width: 720px; /* même largeur que la carte */
+  max-width: 100%;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-stroke);
+  border-radius: 16px;
+  box-shadow: var(--panel-shadow);
+  padding: 12px 14px;
+}
+
+/* Variante à hauteur fixe + scroll interne */
+.mychars--fixed {
+  height: 240px;
+  display: flex;
+  flex-direction: column;
+}
+.mychars-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Scrollbars (optionnel) */
+.mychars-scroll::-webkit-scrollbar,
+.panel-right-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.mychars-scroll::-webkit-scrollbar-thumb,
+.panel-right-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+}
+
+/* =========================
+   PANNEAU DROIT (liste)
+========================= */
+.col-right {
+  min-height: 0;
+} /* pour scroll interne fiable */
+
+.panel-right {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-stroke);
+  border-radius: 16px;
+  box-shadow: var(--panel-shadow);
+  padding: 16px;
+  margin-top: 24px;
+  margin-right: 24px;
+  height: calc(100% - 24px); /* colle en bas sans dépasser */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.panel-right-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.panel-title {
+  margin: 0;
+  font-size: 20px;
+}
+.results {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.panel-right-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding-top: 10px;
+}
+
+/* =========================
+   CARTE GÉNÉRIQUE (héritage)
+========================= */
+.card {
+  border: 1px solid var(--panel-stroke);
+  border-radius: 16px;
+  padding: 12px;
+  background: var(--panel-bg);
+  box-shadow: var(--panel-shadow);
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media (max-width: 1240px) {
+  .screen {
+    height: auto;
+    min-height: calc(100vh - 64px);
+    flex-direction: column;
+  }
+  .col-right {
+    width: auto;
+    flex: 0 0 auto;
+  }
+  .panel-right {
+    margin: 0 24px 24px;
+    height: 520px;
+  }
+  .hero-card,
+  .mychars-wrap {
+    margin-left: 24px;
+    margin-right: 24px;
+    width: auto;
+  }
+}
+
+/* =========================
+   ÉTATS & PETITS PLUS
+========================= */
+/* État vide générique */
+.empty-panel,
+.empty-text {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* Select serveur fallback invité */
+.server-select {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e8f0f0;
+}
+.server-select:disabled {
+  opacity: 0.7;
 }
