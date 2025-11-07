@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "name": "Bienvenue en Incarnam",
+    "category": "Introduction",
+    "level": 1,
+    "area": "Incarnam"
+  },
+  {
+    "id": 2,
+    "name": "Sur la piste du Dofus Émeraude",
+    "category": "Dofus",
+    "level": 50,
+    "area": "Amakna"
+  },
+  {
+    "id": 3,
+    "name": "Le Tour de Pandala",
+    "category": "Pandala",
+    "level": 100,
+    "area": "Pandala"
+  }
+]
