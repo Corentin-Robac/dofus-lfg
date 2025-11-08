@@ -10,6 +10,7 @@ type Character = {
   name: string;
   level: number;
   class: string;
+  serverName?: string;
 };
 
 type CharactersData = {
@@ -29,74 +30,73 @@ export default function MyCharactersCard() {
   if (!data) return null;
   if (!data.characters.length) return null;
 
-  function serverName(id: number) {
-    return servers?.find((s) => s.id === id)?.name ?? `Serveur #${id}`;
+  function getServerName(c: Character) {
+    if (c.serverName) return c.serverName;
+    const s = servers?.find((x) => x.id === c.serverId);
+    return s ? s.name : `Serveur #${c.serverId}`;
   }
 
   async function setActive(id: string) {
-    const res = await fetch("/api/characters/active", {
+    await fetch("/api/characters/active", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ characterId: id }),
     });
-    if (!res.ok) return; // on ne bloque pas l’UI avec des alerts
-    // 1) refresh /api/characters
     await mutate();
-    // 2) revalider les listes dépendantes : matches et header
-    globalMutate(
-      (key: any) =>
-        typeof key === "string" &&
-        (key.startsWith("/api/matches?") ||
-          key === "/api/characters" ||
-          key === "/api/servers")
-    );
+    globalMutate((key: any) => typeof key === "string" && (key.startsWith("/api/matches?") || key === "/api/characters"));
+  }
+
+  function onKey(e: React.KeyboardEvent<HTMLDivElement>, id: string) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      setActive(id);
+    }
   }
 
   return (
-    <div className="card" style={{ marginTop: 16 }}>
-      <h3>Mes personnages</h3>
-      <div style={{ display: "grid", gap: 8 }}>
-        {data.characters.map((c) => {
-          const imgSlug = (c.class || "Cra").toLowerCase().replace("â", "a");
-          const imgSrc = `/images/classes/${imgSlug}.png`;
-          const active = data.activeCharacterId === c.id;
-          return (
-            <div
-              key={c.id}
-              className="card"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: 8,
-              }}
-            >
+    <div className="mychars-grid">
+      {data.characters.map((c) => {
+        const imgSlug = (c.class || "Cra").toLowerCase().replace("â", "a");
+        const imgSrc = `/images/classes/${imgSlug}.png`;
+        const active = data.activeCharacterId === c.id;
+        return (
+          <div
+            key={c.id}
+            className="mychars-item"
+            role="button"
+            tabIndex={0}
+            onClick={() => setActive(c.id)}
+            onKeyDown={(e) => onKey(e, c.id)}
+          >
+            <div className="mychars-item-row">
               <img
                 src={imgSrc}
                 alt={c.class}
-                width={36}
-                height={36}
-                style={{ borderRadius: 6, objectFit: "cover" }}
+                width={40}
+                height={40}
+                style={{ borderRadius: "50%", objectFit: "cover", display: "block" }}
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src =
-                    "/images/classes/cra.png";
+                  (e.target as HTMLImageElement).src = "/images/classes/cra.png";
                 }}
               />
-              <div style={{ fontWeight: 600 }}>{c.name}</div>
-              <div style={{ color: "#555" }}>niv. {c.level}</div>
-              <div style={{ color: "#555" }}>{c.class}</div>
-              <div style={{ color: "#777" }}>{serverName(c.serverId)}</div>
-              <div style={{ marginLeft: "auto" }}>
-                {active ? (
-                  <span style={{ fontSize: 12, color: "#2a7" }}>Actif</span>
-                ) : (
-                  <button onClick={() => setActive(c.id)}>Activer</button>
-                )}
+
+              <div style={{ minWidth: 0 }}>
+                <div className="mychars-item-name" title={c.name}>
+                  {c.name}
+                </div>
+                <div className="mychars-item-server">{getServerName(c)}</div>
+              </div>
+
+              <div className="mychars-item-right">
+                <div className="mychars-item-level">{c.level}</div>
+                <div className={`mychars-item-active ${active ? "is-active" : ""}`}>
+                  {active ? "Actif" : "\u00A0"}
+                </div>
               </div>
             </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

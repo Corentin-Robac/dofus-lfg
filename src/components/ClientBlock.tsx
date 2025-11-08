@@ -134,6 +134,7 @@ export default function ClientBlock() {
                   <ServerSelect
                     value={guestServerId}
                     onChange={setGuestServerId}
+                    servers={servers}
                   />
                 )}
               </div>
@@ -180,7 +181,7 @@ export default function ClientBlock() {
       <div className="col-right">
         <div className="panel-right">
           <div className="panel-right-head">
-            <h3 className="panel-title">Disponibles pour la quête</h3>
+            <h3 className="panel-title">Joueurs sur la même quête</h3>
             <div className="results">
               {selections
                 ? `${selections.length} résultat${
@@ -194,7 +195,6 @@ export default function ClientBlock() {
             <Matches
               serverId={serverIdUsed}
               questId={quest?.id ?? null}
-              selections={sortedSelections}
             />
           </div>
         </div>

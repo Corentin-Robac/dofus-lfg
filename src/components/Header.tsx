@@ -9,7 +9,6 @@ type NavItem = { href: string; label: string };
 
 const NAV: NavItem[] = [
   { href: "/", label: "RECHERCHE" },
-  { href: "/characters", label: "PERSONNAGES" }, // adapte si ta page est ailleurs
   { href: "/profile", label: "PROFIL" },
 ];
 
@@ -32,9 +31,9 @@ export default function Header() {
   return (
     <header className="site-header">
       <div className="site-header__inner">
-        {/* Logo texte (tu pourras remplacer par un svg) */}
-        <a href="/" className="site-header__brand">
-          Dofus LFG
+        {/* Logo image */}
+        <a href="/" className="site-header__brand" aria-label="Accueil">
+          <img src="/images/quetes2.png" alt="" className="site-header__logo" />
         </a>
 
         {/* Nav */}
@@ -58,7 +57,7 @@ export default function Header() {
 
         {/* Espace utilisateur */}
         <div className="site-header__user" ref={menuRef}>
-          {status !== "authenticated" ? (
+          {status === "loading" ? null : status !== "authenticated" ? (
             <button
               className="btn btn--solid"
               onClick={() => signIn("google")}
@@ -100,15 +99,11 @@ export default function Header() {
 
               {open && (
                 <div className="usermenu" role="menu">
+                  <a className="usermenu__item" href="/" role="menuitem">
+                    Recherche
+                  </a>
                   <a className="usermenu__item" href="/profile" role="menuitem">
                     Profil
-                  </a>
-                  <a
-                    className="usermenu__item"
-                    href="/characters"
-                    role="menuitem"
-                  >
-                    Personnages
                   </a>
                   <button
                     className="usermenu__item usermenu__item--danger"

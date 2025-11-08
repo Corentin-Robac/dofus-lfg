@@ -4,6 +4,32 @@ import { Prisma } from "@prisma/client";
 import { getClassImage } from "@/lib/classImages";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
+import { z } from "zod";
+
+const Query = z.object({
+  serverId: z.coerce.number().int().min(1),
+  questId: z.coerce.number().int().min(1),
+});
+
+// Rate limit léger: 20 req / 60s / IP (in-memory)
+const rlStore = new Map<string, number[]>();
+const RL_LIMIT = 20;
+const RL_WINDOW_MS = 60_000;
+function getClientIp(req: Request) {
+  const xf = req.headers.get("x-forwarded-for") || "";
+  const ip = xf.split(",")[0].trim();
+  return ip || req.headers.get("cf-connecting-ip") || "anon";
+}
+function hitRateLimit(req: Request) {
+  const ip = getClientIp(req);
+  const now = Date.now();
+  const arr = rlStore.get(ip) ?? [];
+  const fresh = arr.filter((t) => now - t < RL_WINDOW_MS);
+  if (fresh.length >= RL_LIMIT) return true;
+  fresh.push(now);
+  rlStore.set(ip, fresh);
+  return false;
+}
 
 export async function GET(req: Request) {
   const session = await getServerSession(authOptions);
@@ -16,10 +42,12 @@ export async function GET(req: Request) {
     : null;
 
   const { searchParams } = new URL(req.url);
-  const serverId = Number(searchParams.get("serverId"));
-  const questId = Number(searchParams.get("questId"));
-  if (!serverId || !questId)
-    return new Response("Missing params", { status: 400 });
+  const parsed = Query.safeParse({
+    serverId: searchParams.get("serverId"),
+    questId: searchParams.get("questId"),
+  });
+  if (!parsed.success) return new Response("Missing or invalid params", { status: 400 });
+  const { serverId, questId } = parsed.data;
 
   type Row = Prisma.SelectionGetPayload<{ include: { character: true } }>;
 

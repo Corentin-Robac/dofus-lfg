@@ -123,13 +123,17 @@ export default function QuestAutocomplete({
     }
   }
 
-  const items = useMemo(() => results ?? [], [results]);
+  const items = useMemo(() => {
+   const arr = results ?? [];
+   return arr.slice().sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
+ }, [results]);
 
   return (
-    <div ref={containerRef} style={{ position: "relative" }}>
-      <label>Quête</label>
-      <div style={{ display: "flex", gap: 8 }}>
+    <div ref={containerRef} className="octo-field">
+      <label className="octo-label">Quête</label>
+      <div className={"octo-input-wrap" + (value ? " octo-input-wrap--no-chev" : "")}>
         <input
+          className="octo-input"
           value={input}
           onChange={(e) => {
             setInput(e.target.value);
@@ -139,41 +143,26 @@ export default function QuestAutocomplete({
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
           placeholder={placeholder}
-          style={{ flex: 1 }}
           autoComplete="off"
         />
         {value && (
-          <button type="button" onClick={clearSelection} title="Effacer">
+          <button
+            type="button"
+            className="octo-clear"
+            onClick={clearSelection}
+            title="Effacer"
+            aria-label="Effacer la sélection"
+          >
             ✕
           </button>
         )}
       </div>
 
-      {/* 🔹 Panneau flottant avec max-height + scroll interne */}
       {open && (
-        <div
-          ref={listRef}
-          style={{
-            position: "absolute",
-            left: 0,
-            right: 0,
-            zIndex: 20,
-            marginTop: 4,
-            background: "#fff",
-            border: "1px solid #ddd",
-            borderRadius: 8,
-            boxShadow:
-              "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1)",
-            // 👉 limite la hauteur pour supporter de très grandes listes
-            maxHeight: 360,
-            overflowY: "auto",
-          }}
-        >
-          {isLoading && (
-            <div style={{ padding: 8, color: "#666" }}>Chargement…</div>
-          )}
+        <div ref={listRef} className="octo-panel">
+          {isLoading && <div className="octo-empty">Chargement…</div>}
           {!isLoading && !items.length && (
-            <div style={{ padding: 8, color: "#666" }}>Aucun résultat</div>
+            <div className="octo-empty">Aucun résultat</div>
           )}
 
           {items.map((q, idx) => (
@@ -182,16 +171,10 @@ export default function QuestAutocomplete({
               data-idx={idx}
               onMouseEnter={() => setActiveIdx(idx)}
               onMouseDown={(e) => {
-                // empêcher le blur de l’input avant le click
                 e.preventDefault();
               }}
               onClick={() => selectQuest(q)}
-              style={{
-                padding: "8px 10px",
-                cursor: "pointer",
-                background: activeIdx === idx ? "#eef6ff" : "transparent",
-                borderTop: "1px solid #f3f4f6",
-              }}
+              className={"octo-item" + (activeIdx === idx ? " is-active" : "")}
             >
               {q.name}
             </div>

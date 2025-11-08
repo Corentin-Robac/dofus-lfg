@@ -4,6 +4,13 @@ import { authOptions } from "../../auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
+function normalizeName(input: string) {
+  return input
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
+}
+
 // helper: dans Next 16, params peut être un Promise
 async function unwrapParams<T>(maybe: T | Promise<T>): Promise<T> {
   return typeof (maybe as any)?.then === "function"
@@ -15,7 +22,9 @@ const PatchBody = z.object({
   serverId: z.coerce.number().int().min(1).optional(),
   name: z
     .string()
+    .min(1)
     .max(40)
+    .trim()
     .regex(/^[A-Za-zÀ-ÖØ-öø-ÿ\-\[\]]+$/u, "Nom invalide")
     .optional(),
   level: z.coerce.number().int().min(1).max(200).optional(),
@@ -72,7 +81,7 @@ export async function PATCH(
 
   // éviter doublon (même userId + serverId + name)
   const nextServerId = parsed.data.serverId ?? char.serverId;
-  const nextName = parsed.data.name ?? char.name;
+  const nextName = parsed.data.name ? normalizeName(parsed.data.name) : char.name;
   const duplicate = await prisma.character.findFirst({
     where: {
       userId: user.id,
@@ -93,7 +102,7 @@ export async function PATCH(
     where: { id },
     data: {
       serverId: parsed.data.serverId ?? undefined,
-      name: parsed.data.name ?? undefined,
+      name: parsed.data.name ? normalizeName(parsed.data.name) : undefined,
       level: parsed.data.level ?? undefined,
       class: (parsed.data.class as any) ?? undefined,
     },
