@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Dofus LFG
 
-## Getting Started
+Application Next.js pour organiser des groupes (LFG) autour des quêtes Dofus, avec authentification Google (NextAuth) et base PostgreSQL via Prisma.
 
-First, run the development server:
+## Aperçu
+- **Framework**: Next.js (App Router)
+- **Auth**: NextAuth avec Google + Prisma Adapter (sessions en base)
+- **DB**: PostgreSQL (Prisma)
+- **Scripts utiles**: seed des serveurs, import de quêtes depuis JSON
 
+## Prérequis
+- Node.js 18+
+- PostgreSQL accessible (local ou cloud)
+- Un projet Google OAuth (client ID/secret)
+
+## Installation
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Configuration
+Crée un fichier `.env` à la racine avec les variables suivantes:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Base de données (PostgreSQL)
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DBNAME?schema=public"
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# NextAuth
+NEXTAUTH_URL="http://localhost:3000"
+NEXTAUTH_SECRET="une_chaine_aleatoire_longue"
+GOOGLE_CLIENT_ID="..."
+GOOGLE_CLIENT_SECRET="..."
 
-## Learn More
+# Import des quêtes (optionnel)
+# DOFUS_QUESTS_FILE="/chemin/vers/quests.fr.json"
+```
 
-To learn more about Next.js, take a look at the following resources:
+- Le fichier par défaut d’import des quêtes est `data/quests.fr.json` (fourni).
+- Ne commite jamais `.env` (déjà ignoré par `.gitignore`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Base de données
+Initialise le schéma Prisma puis insère les données initiales (serveurs) et les quêtes.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+# Génère/migre le schéma (en dev)
+npx prisma migrate dev
 
-## Deploy on Vercel
+# Seed serveurs
+npm run db:seed
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# Import des quêtes à partir du JSON
+npm run quests:import
+# ou avec un fichier custom
+# DOFUS_QUESTS_FILE="/chemin/vers/mon.json" npm run quests:import
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Développement
+Scripts principaux:
+
+```bash
+# Lancer le serveur de dev
+npm run dev
+
+# Build de production
+npm run build
+
+# Démarrer en production (après build)
+npm run start
+
+# Lint
+npm run lint
+```
+
+## Déploiement
+- Vercel recommandé (Next.js).
+- Configure les variables d’environnement (DATABASE_URL, NEXTAUTH_URL, NEXTAUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET) dans le tableau de bord.
+- Exécute les migrations Prisma avant le premier démarrage.
+
+## Dépannage rapide
+- Auth Google: assure-toi d’ajouter `http://localhost:3000` (dev) aux URI de redirection autorisées.
+- Import quêtes: vérifie la validité JSON et le chemin du fichier (`DOFUS_QUESTS_FILE`).
+- Prisma: si erreurs de connexion, revalide `DATABASE_URL` et que la DB est joignable.
