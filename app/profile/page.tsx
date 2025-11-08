@@ -1,4 +1,6 @@
 // app/profile/page.tsx
+export const runtime = 'nodejs'
+
 import { getServerSession } from "next-auth";
 import { authOptions } from "../api/auth/[...nextauth]/route";
 import ClientProfile from "@/components/ClientProfile";

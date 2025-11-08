@@ -1,4 +1,6 @@
 // app/api/selection/[id]/route.ts
+export const runtime = 'nodejs'
+
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";

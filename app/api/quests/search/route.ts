@@ -1,4 +1,6 @@
 // app/api/quests/search/route.ts
+export const runtime = 'nodejs'
+
 import { prisma } from "@/lib/prisma";
 
 function sanitizeQuery(input: string) {

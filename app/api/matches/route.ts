@@ -1,4 +1,6 @@
 // app/api/matches/route.ts
+export const runtime = 'nodejs'
+
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
 import { getClassImage } from "@/lib/classImages";
