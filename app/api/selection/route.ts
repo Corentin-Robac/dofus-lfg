@@ -4,10 +4,19 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { z } from "zod";
 
+function sanitizeNote(input: string) {
+  return input
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/[\u0000-\u001F\u007F]/g, "")
+    .trim()
+    .slice(0, 500);
+}
+
 const Body = z.object({
-  serverId: z.number(),
-  questId: z.number(),
-  note: z.string().optional(),
+  serverId: z.coerce.number().int().min(1),
+  questId: z.coerce.number().int().min(1),
+  note: z.string().max(500).optional(),
 });
 
 export async function POST(req: Request) {
@@ -25,9 +34,16 @@ export async function POST(req: Request) {
     return new Response("Aucun personnage actif sélectionné.", { status: 400 });
   }
 
-  const parsed = Body.safeParse(await req.json());
+  let json: unknown;
+  try {
+    json = await req.json();
+  } catch {
+    return new Response("Invalid JSON body", { status: 400 });
+  }
+  const parsed = Body.safeParse(json);
   if (!parsed.success) return new Response("Invalid body", { status: 400 });
   const { serverId, questId, note } = parsed.data;
+  const safeNote = note ? sanitizeNote(note) : undefined;
 
   // sécurité : le perso actif doit être sur le même serveur choisi
   if (user.activeCharacter.serverId !== serverId) {
@@ -44,7 +60,7 @@ export async function POST(req: Request) {
   if (existing) {
     await prisma.selection.update({
       where: { id: existing.id },
-      data: { note },
+      data: { note: safeNote }
     });
   } else {
     await prisma.selection.create({
@@ -52,7 +68,7 @@ export async function POST(req: Request) {
         characterId: user.activeCharacter.id,
         serverId,
         questId,
-        note,
+        note: safeNote,
       },
     });
   }

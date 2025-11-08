@@ -1,7 +1,7 @@
 // src/components/Matches.tsx
 "use client";
 import useSWR from "swr";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -33,6 +33,32 @@ export default function Matches({
 
   const [deleting, setDeleting] = useState<string | null>(null);
 
+  const sorted = useMemo(
+    () => (data ? [...data].sort((a, b) => (a.isMine === b.isMine ? 0 : a.isMine ? -1 : 1)) : []),
+    [data]
+  );
+
+  const [copied, setCopied] = useState(false);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  async function onItemClick(m: MatchItem) {
+    try {
+      await navigator.clipboard.writeText(`/w ${m.characterName} `);
+      if (timerRef.current) window.clearTimeout(timerRef.current);
+      setCopied(false);
+      requestAnimationFrame(() => {
+        setCopied(true);
+        timerRef.current = window.setTimeout(() => setCopied(false), 5000);
+      });
+    } catch {}
+  }
+
   async function remove(id: string) {
     if (!data) return;
     setDeleting(id);
@@ -59,45 +85,39 @@ export default function Matches({
   if (!data?.length)
     return <div className="card">Aucun joueur trouvé (pour l’instant).</div>;
 
+
   return (
-    <div>
-      <h3>Joueurs sur la même quête</h3>
-      {data.map((m) => (
-        <div
-          key={m.id}
-          className="card"
-          style={{ display: "flex", gap: 12, alignItems: "center" }}
-        >
-          <img
-            src={m.avatar}
-            alt={m.characterClass}
-            width={40}
-            height={40}
-            style={{ borderRadius: 8, objectFit: "cover" }}
-          />
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600 }}>
-              {m.characterName} — niv. {m.characterLevel} — {m.characterClass}
-            </div>
-            <div style={{ fontSize: 12, color: "#777" }}>
-              {new Date(m.when).toLocaleString("fr-FR", {
-                dateStyle: "short",
-                timeStyle: "short",
-              })}
+    <>
+      <div>
+        {sorted.map((m) => (
+          <div key={m.id} className="card match-card" onClick={() => onItemClick(m)}>
+            <div className="match-row">
+              <div className="match-col1 match-avatar">
+                <img src={m.avatar} alt={m.characterClass} className="match-img" />
+              </div>
+
+              <div className="match-col2">
+                <div className="match-name">{m.characterName}</div>
+                <div className="match-class">{m.characterClass}</div>
+              </div>
+
+              <div className="match-col3">
+                <div className="match-level">niv. {m.characterLevel}</div>
+                {m.isMine && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); remove(m.id); }}
+                    disabled={deleting === m.id}
+                    className="match-delete"
+                  >
+                    {deleting === m.id ? "Suppression…" : "Supprimer"}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-
-          {m.isMine && (
-            <button
-              onClick={() => remove(m.id)}
-              disabled={deleting === m.id}
-              style={{ color: "#a22", opacity: deleting === m.id ? 0.6 : 1 }}
-            >
-              {deleting === m.id ? "Suppression…" : "Supprimer"}
-            </button>
-          )}
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+      <div className={"copied-toast" + (copied ? " is-visible" : "")}>Copié</div>
+    </>
   );
 }

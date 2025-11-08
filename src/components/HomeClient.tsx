@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
+import { useSession } from "next-auth/react";
 import QuestAutocomplete from "@/components/QuestAutocomplete";
 import Matches from "@/components/Matches";
 import MyCharactersCard from "@/components/MyCharactersCard";
@@ -38,11 +39,20 @@ const fetcher = (url: string) =>
 export default function HomeClient() {
   const { mutate: globalMutate } = useSWRConfig();
 
-  // --- Persos (si 401 => invité)
-  const { data: chars } = useSWR<CharactersData>("/api/characters", fetcher, {
-    shouldRetryOnError: false,
-    revalidateOnFocus: false,
-  });
+  // Auth status first to drive data fetching
+  const { status } = useSession();
+  const isAuthLoading = status === "loading";
+  const isAuthenticated = status === "authenticated";
+
+  // --- Persos (fetch only when authenticated)
+  const { data: chars } = useSWR<CharactersData>(
+    isAuthenticated ? "/api/characters" : null,
+    fetcher,
+    {
+      shouldRetryOnError: false,
+      revalidateOnFocus: false,
+    }
+  );
   const active =
     chars?.characters?.find((c) => c.id === chars?.activeCharacterId) || null;
 
@@ -55,10 +65,11 @@ export default function HomeClient() {
     }
   );
 
+
   // --- Serveur pour invité
   const [guestServerId, setGuestServerId] = useState<number | null>(null);
 
-  // Toujours forcer une valeur par défaut dès que la liste arrive
+  // Toujours forcer une valeur par défaut pour l'invité ou si aucun perso actif dès que la liste arrive
   useEffect(() => {
     if (!active && servers?.length && guestServerId === null) {
       setGuestServerId(servers[0].id);
@@ -108,7 +119,12 @@ export default function HomeClient() {
 
   // --- Avatar (placeholder Cra si invité)
   const classSlug = (active?.class || "Cra").toLowerCase().replace("â", "a");
-  const avatarSrc = `/images/classes/${classSlug}.png`;
+  const avatarSrc = `/images/classes/${classSlug}2.png`;
+
+  // While auth/servers or characters (when authenticated) are loading, render nothing
+  if (isAuthLoading || serversLoading || (isAuthenticated && !chars)) {
+    return null;
+  }
 
   return (
     <>
@@ -116,36 +132,47 @@ export default function HomeClient() {
       <section className="col-left">
         {/* Carte personnage + quête */}
         <div className="hero-card">
-          <div className="hero-header">
-            <img
-              src={avatarSrc}
-              alt={active?.class ?? "Cra"}
-              className="hero-avatar"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/images/classes/cra.png";
-              }}
-            />
-            <div className="hero-meta">
-              <div className="hero-name">{active ? active.name : "Invité"}</div>
-
-              {/* Serveur : pill si connecté, select si invité */}
+          <div className="hero-grid">
+            <div className="hero-left">
+              <h3 className="hero-name">{active ? active.name : isAuthenticated ? "Aucun personnage" : "Invité"}</h3>
+              <div className="hero-avatar-wrap">
+                <img
+                  src={avatarSrc}
+                  alt={active?.class ?? "Cra"}
+                  className="hero-avatar"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = "/images/classes/cra2.png";
+                  }}
+                />
+              </div>
+            </div>
+            <div className="hero-right">
+              {/* Serveur : pill si connecté, select sinon */}
               <div className="server-line">
                 {active ? (
-                  <span className="server-pill">{serverNameUsed}</span>
+                  servers?.length ? (
+                    <ServerSelect
+                      value={active.serverId}
+                      onChange={() => {}}
+                      servers={servers.filter((s) => s.id === active.serverId)}
+                    />
+                  ) : (
+                    <select className="server-select" disabled>
+                      <option>Chargement des serveurs…</option>
+                    </select>
+                  )
                 ) : (
-                  <>
-                    {/* Always show a visible select in guest mode */}
-                    {servers?.length ? (
-                      <ServerSelect
-                        value={guestServerId}
-                        onChange={setGuestServerId}
-                      />
-                    ) : (
-                      <select className="server-select" disabled>
-                        <option>Chargement des serveurs…</option>
-                      </select>
-                    )}
-                  </>
+                  servers?.length ? (
+                    <ServerSelect
+                      value={guestServerId}
+                      onChange={setGuestServerId}
+                      servers={servers}
+                    />
+                  ) : (
+                    <select className="server-select" disabled>
+                      <option>Chargement des serveurs…</option>
+                    </select>
+                  )
                 )}
               </div>
 
@@ -163,9 +190,9 @@ export default function HomeClient() {
                 >
                   Ajouter
                 </button>
-                {!active && (
+                {!isAuthenticated && (
                   <span className="hint">
-                    Connectez-vous et créez un personnage pour suivre des
+                    <a href="/api/auth/signin">Connectez-vous</a> et créez un personnage pour suivre des
                     quêtes.
                   </span>
                 )}
@@ -176,16 +203,22 @@ export default function HomeClient() {
 
         {/* Mes personnages (fixed height with internal scroll) */}
         <div className="mychars-wrap mychars--fixed">
+          <div style={{ padding: "0 4px 8px 4px" }}>
+            <h3 className="panel-title" style={{ margin: 0 }}>Mes personnages</h3>
+          </div>
           <div className="mychars-scroll">
             {active ? (
               <MyCharactersCard />
             ) : (
               <div className="empty-panel">
-                <div className="panel-title" style={{ marginBottom: 8 }}>
-                  Mes personnages
-                </div>
                 <div className="empty-text">
-                  Aucun personnage. Connectez-vous pour en créer un.
+                  {isAuthenticated ? (
+                    <>
+                      Aucun personnage, <a href="/profile">créez-en un</a> pour vous inscrire aux quêtes.
+                    </>
+                  ) : (
+                    "Aucun personnage. Connectez-vous pour en créer un."
+                  )}
                 </div>
               </div>
             )}
@@ -197,7 +230,7 @@ export default function HomeClient() {
       <aside className="col-right">
         <div className="panel-right">
           <div className="panel-right-head">
-            <h3 className="panel-title">Disponibles pour la quête</h3>
+            <h3 className="panel-title">Joueurs sur la même quête</h3>
             <div className="results">
               {resultsCount} résultat{resultsCount > 1 ? "s" : ""}
             </div>

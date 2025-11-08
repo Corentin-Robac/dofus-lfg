@@ -67,15 +67,41 @@ async function run() {
     process.exit(0);
   }
 
-  // Insertion par paquets
-  const chunkSize = 500;
-  let inserted = 0;
-  for (let i = 0; i < rows.length; i += chunkSize) {
-    const chunk = rows.slice(i, i + chunkSize);
-    await prisma.quest.createMany({ data: chunk, skipDuplicates: true });
-    inserted += chunk.length;
-    console.log(`📦 Inserted ${inserted}/${rows.length}`);
-  }
+  const ids = rows.map((r) => r.id);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.selection.deleteMany({ where: { questId: { notIn: ids } } });
+    await tx.quest.deleteMany({ where: { id: { notIn: ids } } });
+
+    const existing = await tx.quest.findMany({
+      select: { id: true },
+      where: { id: { in: ids } },
+    });
+    const existingSet = new Set(existing.map((q) => q.id));
+
+    const toCreate = rows.filter((r) => !existingSet.has(r.id));
+    if (toCreate.length) {
+      await tx.quest.createMany({ data: toCreate });
+    }
+
+    const chunkSize = 500;
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      const chunk = rows
+        .slice(i, i + chunkSize)
+        .filter((r) => existingSet.has(r.id));
+      for (const r of chunk) {
+        await tx.quest.update({
+          where: { id: r.id },
+          data: {
+            name: r.name,
+            category: r.category,
+            level: r.level,
+            area: r.area,
+          },
+        });
+      }
+    }
+  });
 
   console.log("🎉 Import terminé depuis JSON.");
   process.exit(0);

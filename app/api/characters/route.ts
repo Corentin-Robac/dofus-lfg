@@ -5,10 +5,22 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import type { Prisma } from "@prisma/client";
 
+function normalizeName(input: string) {
+  return input
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
+}
+
 const Body = z.object({
   serverId: z.coerce.number().int().min(1),
-  name: z.string().min(2).max(30).trim(),
-  level: z.coerce.number().int().min(1).max(300),
+  name: z
+    .string()
+    .min(1)
+    .max(40)
+    .trim()
+    .regex(/^[A-Za-zÀ-ÖØ-öø-ÿ\-\[\]]+$/u, "Nom invalide"),
+  level: z.coerce.number().int().min(1).max(200),
   class: z.enum([
     "Feca",
     "Osamodas",
@@ -83,9 +95,10 @@ export async function POST(req: Request) {
   if (!parsed.success) return new Response("Invalid body", { status: 400 });
 
   const { serverId, name, level, class: cls } = parsed.data;
+  const safeName = normalizeName(name);
 
   const duplicate = await prisma.character.findFirst({
-    where: { userId: user.id, serverId, name },
+    where: { userId: user.id, serverId, name: safeName },
     select: { id: true },
   });
   if (duplicate) {
@@ -95,13 +108,14 @@ export async function POST(req: Request) {
     );
   }
 
+  const clsValue = cls === "Cra" ? "Crâ" : cls;
   const created = await prisma.character.create({
     data: {
       userId: user.id,
       serverId,
-      name,
+      name: safeName,
       level,
-      class: cls as Prisma.DofusClass,
+      class: clsValue as Prisma.CharacterCreateInput["class"],
     },
   });
 
