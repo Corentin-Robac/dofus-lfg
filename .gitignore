@@ -15,6 +15,7 @@
 
 # next.js
 /.next/
+/.next/cache
 /out/
 
 # production
@@ -39,3 +40,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# IDE
+.vscode
+.idea
+
+# turbo
+.turbo
+
+# Prisma (if using SQLite locally; harmless otherwise)
+prisma/*.db
+prisma/*.db-journal
