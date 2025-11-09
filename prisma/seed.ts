@@ -28,8 +28,20 @@ const SERVERS = [
 ];
 
 async function main() {
-  await prisma.server.createMany({ data: SERVERS, skipDuplicates: true });
-  console.log("✅ Servers seeded.");
+  const ids = SERVERS.map((s) => s.id);
+
+  await prisma.$transaction([
+    prisma.server.deleteMany({ where: { id: { notIn: ids } } }),
+    ...SERVERS.map((s) =>
+      prisma.server.upsert({
+        where: { id: s.id },
+        update: { name: s.name, region: s.region, kind: s.kind },
+        create: s,
+      })
+    ),
+  ]);
+
+  console.log("✅ Servers synced with seed list.");
 }
 
 main()
