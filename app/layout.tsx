@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import Providers from "@/components/Providers";
 
 export const metadata = {
-  title: "Dofus LFG",
+  title: "Dofus Quetes",
 };
 
 export default function RootLayout({
